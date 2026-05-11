@@ -1,76 +1,20 @@
 import asyncio
 import os
-import threading
-from flask import Flask
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime
+import pytz
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message
 from aiogram.filters import Command
+from aiogram.types import Message
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import pytz
 
-import sqlite3
-from datetime import datetime
-from dotenv import load_dotenv
-load_dotenv()
-DB_NAME = "bot_database.db"
-
-def init_db():
-    """Создаёт таблицы, если их нет"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    
-    # Таблица для дней рождения
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS birthdays (
-            user_id INTEGER PRIMARY KEY,
-            username TEXT,
-            birthday TEXT NOT NULL
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
-    print("База данных готова!")
-
-def add_birthday(user_id: int, username: str, birthday: str):
-    """Добавляет или обновляет день рождения пользователя"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT OR REPLACE INTO birthdays (user_id, username, birthday)
-        VALUES (?, ?, ?)
-    ''', (user_id, username, birthday))
-    conn.commit()
-    conn.close()
-
-def get_all_birthdays():
-    """Возвращает все дни рождения из базы"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('SELECT user_id, username, birthday FROM birthdays')
-    results = cursor.fetchall()
-    conn.close()
-    return results
-
-def get_today_birthdays():
-    """Возвращает список именинников на сегодня"""
-    today = datetime.now().strftime("%d-%m")
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('SELECT user_id, username FROM birthdays WHERE birthday = ?', (today,))
-    results = cursor.fetchall()
-    conn.close()
-    return results
-# ========== НАСТРОЙКИ ==========
-TOKEN = os.environ.get("TELEGRAM_TOKEN")  # Токен из переменных окружения Render
-GROUP_CHAT_ID = -1003994088941  # ID твоей группы
-TOPIC_BIRTHDAYS = 5  # ID топика для поздравлений
-
-if not TOKEN:
-    raise ValueError("Переменная TELEGRAM_TOKEN не установлена!")
+# Импортируем нашу базу данных
+from database import init_db, add_birthday, get_all_birthdays, get_today_birthdays
+GROUP_CHAT_ID = -1003994088941 
+TOPIC_BIRTHDAYS = 5
+TOKEN = "8261368233:AAEi1IDTo3HJ_xoxemn6Fmz41yh4Nz1sB-w"
 
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
@@ -83,7 +27,8 @@ init_db()
 class BirthdayForm(StatesGroup):
     waiting_for_birthday = State()
 
-# ========== ОБРАБОТЧИКИ КОМАНД (твои старые обработчики) ==========
+# ========== ОБРАБОТЧИКИ КОМАНД ==========
+
 @dp.message(Command("start"))
 async def start_command(message: Message):
     await message.answer(
@@ -166,12 +111,8 @@ async def show_birthdays(message: Message):
     
     await message.answer(text, parse_mode="Markdown")
 
-
-# ========== ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ДНЕЙ РОЖДЕНИЙ ==========
 async def check_birthdays():
-    """Проверяет дни рождения и отправляет поздравление в группу"""
     today_birthdays = get_today_birthdays()
-    
     if not today_birthdays:
         return
     
@@ -185,15 +126,13 @@ async def check_birthdays():
     try:
         await bot.send_message(
             chat_id=GROUP_CHAT_ID,
-            message_thread_id=TOPIC_BIRTHDAYS,
+            message_thread_id=TOPIC_BIRTHDAYS,  # ← ГЛАВНОЕ ДОБАВЛЕНИЕ
             text=text,
             parse_mode="Markdown"
         )
         print(f"Поздравление отправлено в топик {TOPIC_BIRTHDAYS}")
     except Exception as e:
         print(f"Не удалось отправить: {e}")
-
-
 
 @dp.message(Command("slot"))
 async def slot_machine(message: Message):
@@ -236,8 +175,8 @@ async def test_birthday_group(message: Message):
     
     try:
         await bot.send_message(
-            chat_id=GROUP_CHAT_ID,
-            message_thread_id=TOPIC_BIRTHDAYS,
+            chat_id=-1003994088941,
+            message_thread_id=5,
             text=text,
             parse_mode="Markdown"
         )
@@ -246,37 +185,23 @@ async def test_birthday_group(message: Message):
         await message.answer(f"❌ Ошибка: {e}")
 
 
+
+
+
 # ========== ЗАПУСК БОТА ==========
-async def start_bot():
-    """Запускает планировщик и polling бота"""
+async def main():
+    # Настраиваем планировщик
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
+    
+    # Добавляем задачу: каждый день в 9:00 проверять дни рождения
     scheduler.add_job(check_birthdays, 'cron', hour=9, minute=0)
+    
     scheduler.start()
     print("🤖 Бот запущен! Планировщик активен.")
+    
     await dp.start_polling(bot)
 
-# ========== ВЕБ-СЕРВЕР ДЛЯ RENDER ==========
-# Это чтобы Render не ругался, что нет открытого порта
-app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "Бот работает!", 200
 
-@app.route('/health')
-def health():
-    return "OK", 200
-
-def run_flask():
-    """Запускает Flask-сервер в отдельном потоке"""
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
-# ========== ТОЧКА ВХОДА ==========
-if __name__ == "__main__":
-    # Запускаем Flask в фоновом потоке
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.start()
-    
-    # Запускаем бота (в основном потоке, так как asyncio.run() должен быть в главном)
-    asyncio.run(start_bot())
+if __name__ =="__main__":
+    asyncio.run(main())
