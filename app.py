@@ -10,13 +10,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import pytz
-
+from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
 import sqlite3
 from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 DB_NAME = "bot_database.db"
-
+from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
 def init_db():
     """Создаёт таблицы, если их нет"""
     conn = sqlite3.connect(DB_NAME)
@@ -68,7 +68,7 @@ def get_today_birthdays():
 TOKEN = os.environ.get("TELEGRAM_TOKEN")  # Токен из переменных окружения Render
 GROUP_CHAT_ID = -1003994088941  # ID твоей группы
 TOPIC_BIRTHDAYS = 5  # ID топика для поздравлений
-
+TOPIC_DEADLINES = 112  # ← ЗАМЕНИ НА РЕАЛЬНЫЙ ID топика "Дедлайны" (узнай через @getmyid_bot)
 if not TOKEN:
     raise ValueError("Переменная TELEGRAM_TOKEN не установлена!")
 
@@ -251,6 +251,8 @@ async def start_bot():
     """Запускает планировщик и polling бота"""
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
     scheduler.add_job(check_birthdays, 'cron', hour=9, minute=0)
+    scheduler.add_job(lambda: check_deadlines(bot, GROUP_CHAT_ID, TOPIC_DEADLINES), 'cron', hour=9, minute=5)
+    scheduler.add_job(check_deadlines, 'cron', hour=9, minute=5)
     scheduler.start()
     print("🤖 Бот запущен! Планировщик активен.")
     await dp.start_polling(bot)
@@ -277,6 +279,7 @@ if __name__ == "__main__":
     # Запускаем Flask в фоновом потоке
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
-    
+    register_deadline_handlers(dp)
+        register_deadline_handlers(dp, GROUP_CHAT_ID, TOPIC_DEADLINES)
     # Запускаем бота (в основном потоке, так как asyncio.run() должен быть в главном)
     asyncio.run(start_bot())
