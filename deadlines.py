@@ -12,7 +12,7 @@ from aiogram.types import Message
 
 # ========== НАСТРОЙКИ ==========
 # ⚠️ ЗАМЕНИ НА СВОЙ TELEGRAM ID (можно узнать у бота @userinfobot)
-ADMIN_USER_ID = 123456789  # ← СЮДА ВСТАВЬ СВОЙ ID
+ADMIN_USER_ID = 1337585530  # ← СЮДА ВСТАВЬ СВОЙ ID
 
 # ID группы и топика для дедлайнов (возьмём из app.py позже)
 # Пока оставим пустыми, заполним при регистрации
@@ -240,9 +240,10 @@ def register_deadline_handlers(dp, group_chat_id: int, topic_id: int):
     global GROUP_CHAT_ID, TOPIC_DEADLINES_ID
     GROUP_CHAT_ID = group_chat_id
     TOPIC_DEADLINES_ID = topic_id
-    
+    print(f"Регистрируем обработчики дедлайнов с GROUP_CHAT_ID={group_chat_id}, TOPIC_ID={topic_id}")
     # Инициализируем таблицу в БД
     init_deadlines_table()
     
     # Подключаем роутер к диспетчеру
     dp.include_router(router)
+    print("Обработчики дедлайнов подключены к диспетчеру")

@@ -14,9 +14,10 @@ from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
 import sqlite3
 from datetime import datetime
 from dotenv import load_dotenv
+print("Проверка: модули загружены. Регистрируем команды...")
 load_dotenv()
 DB_NAME = "bot_database.db"
-from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
+
 def init_db():
     """Создаёт таблицы, если их нет"""
     conn = sqlite3.connect(DB_NAME)
@@ -91,17 +92,26 @@ async def start_command(message: Message):
         "Доступные команды:\n"
         "/birthday - добавить/обновить день рождения\n"
         "/birthdays - показать все дни рождения\n"
-        "/help - помощь"
+        "Другие команды находятся пока в разработке, но скоро будут! 😉\n\n"
+        "А пока что можешь попробовать /help для получения списка всех команд, когда они будут готовы!"
     )
 
 @dp.message(Command("help"))
 async def help_command(message: Message):
     await message.answer(
-        "📋 Команды бота:\n\n"
-        "/birthday - добавить или обновить свой день рождения\n"
-        "/birthdays - показать список всех дней рождений в группе\n"
+        "📋 **Команды бота:**\n\n"
+        "**Дни рождения:**\n"
+        "/birthday - добавить свой день рождения\n"
+        "/birthdays - показать все дни рождения\n\n"
+        "**Дедлайны:**\n"
+        "/deadlines - показать список дедлайнов\n"
+        "/add_deadline - добавить дедлайн (только для старосты)\n"
+        "/del_deadline - удалить дедлайн (только для старосты)\n\n"
+        "**Игры:**\n"
+        "/slot - слот-машина 🎰\n\n"
         "/start - приветствие\n"
-        "/help - эта справка"
+        "/help - эта справка",
+        parse_mode="Markdown"
     )
 
 @dp.message(Command("birthday"))
@@ -252,7 +262,6 @@ async def start_bot():
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
     scheduler.add_job(check_birthdays, 'cron', hour=9, minute=0)
     scheduler.add_job(lambda: check_deadlines(bot, GROUP_CHAT_ID, TOPIC_DEADLINES), 'cron', hour=9, minute=5)
-    scheduler.add_job(check_deadlines, 'cron', hour=9, minute=5)
     scheduler.start()
     print("🤖 Бот запущен! Планировщик активен.")
     await dp.start_polling(bot)
@@ -274,12 +283,23 @@ def run_flask():
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
+
+
+@dp.message(Command("test_deadline"))
+async def test_deadline_cmd(message: Message):
+    await message.answer("✅ Команда test_deadline работает! Если вы это видите — бот вообще работает, проблема в подключении deadlines.py")
+
+# Проверка, что обработчики дедлайнов зарегистрированы
+print("Проверка: в app.py зарегистрированы обработчики дедлайнов")
 # ========== ТОЧКА ВХОДА ==========
+
 if __name__ == "__main__":
     # Запускаем Flask в фоновом потоке
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
-    register_deadline_handlers(dp)
-        register_deadline_handlers(dp, GROUP_CHAT_ID, TOPIC_DEADLINES)
-    # Запускаем бота (в основном потоке, так как asyncio.run() должен быть в главном)
+    
+    # Регистрируем обработчики дедлайнов
+    register_deadline_handlers(dp, GROUP_CHAT_ID, TOPIC_DEADLINES)
+    
+    # Запускаем бота
     asyncio.run(start_bot())
