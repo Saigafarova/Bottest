@@ -2,9 +2,8 @@
 Модуль с дедлайнами.
 Команды: /add_deadline, /deadlines, /deadlines [предмет], /old_deadlines, /del_deadline
 """
-
+from datetime import datetime, timedelta
 import sqlite3
-from datetime import datetime
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.types import Message
