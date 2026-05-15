@@ -11,7 +11,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 
 # Импортируем нашу базу данных
-from database import init_db, add_birthday, get_all_birthdays, get_today_birthdays
+
 GROUP_CHAT_ID = -1003994088941 
 TOPIC_BIRTHDAYS = 5
 TOKEN = "8261368233:AAEi1IDTo3HJ_xoxemn6Fmz41yh4Nz1sB-w"
