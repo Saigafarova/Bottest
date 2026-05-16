@@ -1,4 +1,13 @@
 {
   "birthdays": {},
-  "deadlines": []
+  "deadlines": [
+    {
+      "id": 1,
+      "subject": "Прога",
+      "title": "лр4",
+      "deadline_date": "2026-05-17",
+      "comment": "",
+      "created_by": 1337585530
+    }
+  ]
 }
