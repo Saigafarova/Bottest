@@ -10,6 +10,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import pytz
+from datetime import datetime
 from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
 from dotenv import load_dotenv
 from birthdays import register_birthday_handlers, check_birthdays
@@ -90,16 +91,44 @@ async def test_group(message: Message):
 
 # ========== ЗАПУСК БОТА ==========
 async def start_bot():
-    """Запускает планировщик и polling бота"""
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
-    scheduler.add_job(lambda: check_birthdays(bot, GROUP_CHAT_ID, TOPIC_BIRTHDAYS), 'cron', hour=9, minute=0)
-    scheduler.add_job(lambda: check_deadlines(bot, GROUP_CHAT_ID, TOPIC_DEADLINES), 'cron', hour=9, minute=5)
+    
+    # Дни рождения
+    scheduler.add_job(
+        check_birthdays, 
+        'cron', 
+        hour=9, 
+        minute=0,
+        args=(bot, GROUP_CHAT_ID, TOPIC_BIRTHDAYS),
+        id='birthdays_daily',
+        replace_existing=True
+    )
+    
+    # Дедлайны
+    scheduler.add_job(
+        check_deadlines, 
+        'cron', 
+        hour=9, 
+        minute=5,
+        args=(bot, GROUP_CHAT_ID, TOPIC_DEADLINES),
+        id='deadlines_daily',
+        replace_existing=True
+    )
+    
     scheduler.start()
-    print("🤖 Бот запущен! Планировщик активен.")
-    await dp.start_polling(bot)
+    
+    print("✅ Планировщик APScheduler успешно запущен!")
+    print(f"   → Дни рождения: каждый день в 9:00")
+    print(f"   → Дедлайны: каждый день в 9:05")
+    
+    # Показываем текущее время сервера (удобно для проверки)
+    moscow_time = datetime.now(pytz.timezone('Europe/Moscow'))
+    print(f"   → Текущее время на сервере: {moscow_time.strftime('%H:%M:%S')}")
 
+    print("🤖 Запускаем polling бота...")
+    await dp.start_polling(bot)
 # ========== ВЕБ-СЕРВЕР ДЛЯ RENDER ==========
-# Это чтобы Render не ругался, что нет открытого порта
+
 app = Flask(__name__)
 
 @app.route('/')
@@ -127,11 +156,12 @@ print("Проверка: в app.py зарегистрированы обрабо
 
 if __name__ == "__main__":
     # Запускаем Flask в фоновом потоке
-    flask_thread = threading.Thread(target=run_flask)
+    flask_thread = threading.Thread(target=run_flask, daemon=True)  # ← Вот здесь добавили daemon=True
     flask_thread.start()
     
-    # Регистрируем обработчики дедлайнов
+    # Регистрируем обработчики (ВАЖНО: перед запуском бота!)
     register_deadline_handlers(dp, GROUP_CHAT_ID, TOPIC_DEADLINES)
     register_birthday_handlers(dp, bot, GROUP_CHAT_ID, TOPIC_BIRTHDAYS)
+    
     # Запускаем бота
     asyncio.run(start_bot())

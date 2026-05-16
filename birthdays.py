@@ -1,9 +1,9 @@
 """
 Модуль с днями рождения.
 Содержит команды для добавления, просмотра и автоматические поздравления.
+Данные хранятся на GitHub.
 """
 
-import sqlite3
 from datetime import datetime
 from aiogram import Router, types
 from aiogram.filters import Command
@@ -11,49 +11,11 @@ from aiogram.types import Message
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
-# ========== ФУНКЦИИ БАЗЫ ДАННЫХ ==========
-DB_NAME = "bot_database.db"
-
-def init_birthdays_table():
-    """Создаёт таблицу для дней рождения, если её нет"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS birthdays (
-            user_id INTEGER PRIMARY KEY,
-            username TEXT,
-            birthday TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-def add_birthday(user_id: int, username: str, birthday: str):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT OR REPLACE INTO birthdays (user_id, username, birthday)
-        VALUES (?, ?, ?)
-    ''', (user_id, username, birthday))
-    conn.commit()
-    conn.close()
-
-def get_all_birthdays():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('SELECT user_id, username, birthday FROM birthdays')
-    results = cursor.fetchall()
-    conn.close()
-    return results
-
-def get_today_birthdays():
-    today = datetime.now().strftime("%d-%m")
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('SELECT user_id, username FROM birthdays WHERE birthday = ?', (today,))
-    results = cursor.fetchall()
-    conn.close()
-    return results
+from github_db import (
+    add_birthday_to_github as add_birthday,
+    get_all_birthdays_from_github as get_all_birthdays,
+    get_today_birthdays_from_github as get_today_birthdays
+)
 
 # ========== FSM ==========
 class BirthdayForm(StatesGroup):
@@ -91,10 +53,9 @@ async def process_birthday(message: Message, state: FSMContext):
     if day_num < 1 or day_num > 31 or month_num < 1 or month_num > 12:
         await message.answer("❌ Неверная дата! День 1-31, месяц 1-12")
         return
-    # Дополнительная проверка существования даты (30 февраля и т.п.)
+    # Дополнительная проверка существования даты
     try:
-        # Используем текущий год для проверки високосности
-        test_date = datetime.strptime(f"{day}-{month}-{datetime.now().year}", "%d-%m-%Y")
+        datetime.strptime(f"{day}-{month}-{datetime.now().year}", "%d-%m-%Y")
     except ValueError:
         await message.answer("❌ Такой даты не существует!")
         return
@@ -120,9 +81,10 @@ async def show_birthdays(message: Message):
         text += f"• {username}: {bday}\n"
     await message.answer(text, parse_mode="Markdown")
 
-
 # ========== АВТОМАТИЧЕСКИЕ ПРОВЕРКИ ==========
 async def check_birthdays(bot, group_chat_id: int, topic_id: int):
+    print(f"[{datetime.now()}] check_birthdays запущена")
+    print(f"DEBUG: check_birthdays вызвана с bot={bot}, group_chat_id={group_chat_id}, topic_id={topic_id}")
     today_birthdays = get_today_birthdays()
     if not today_birthdays:
         return
@@ -145,14 +107,12 @@ async def check_birthdays(bot, group_chat_id: int, topic_id: int):
 
 # ========== РЕГИСТРАЦИЯ МОДУЛЯ ==========
 def register_birthday_handlers(dp, bot, group_chat_id: int, topic_id: int):
-    """Регистрирует обработчики и сохраняет глобальные параметры для check_birthdays и test_birthday"""
-    # Сохраняем параметры для использования внутри модуля (через замыкание)
+    """Регистрирует обработчики и сохраняет параметры"""
     global _bot, _group_chat_id, _topic_id
     _bot = bot
     _group_chat_id = group_chat_id
     _topic_id = topic_id
 
-    # Переопределяем test_birthday_group, чтобы он использовал сохранённые параметры
     @router.message(Command("test_birthday"))
     async def test_birthday_group(message: Message):
         today_birthdays = get_today_birthdays()
@@ -172,5 +132,4 @@ def register_birthday_handlers(dp, bot, group_chat_id: int, topic_id: int):
         except Exception as e:
             await message.answer(f"❌ Ошибка: {e}")
 
-    init_birthdays_table()
     dp.include_router(router)
