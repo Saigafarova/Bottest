@@ -5,14 +5,5 @@
       "birthday": "17-05"
     }
   },
-  "deadlines": [
-    {
-      "id": 2,
-      "subject": "Матан",
-      "title": "Лабораторная работа №3",
-      "deadline_date": "2026-05-25",
-      "comment": "Выполнить задания 1-5",
-      "created_by": 1337585530
-    }
-  ]
+  "deadlines": []
 }
