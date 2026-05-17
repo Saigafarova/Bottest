@@ -19,8 +19,8 @@ load_dotenv()
 # ========== НАСТРОЙКИ ==========
 TOKEN = os.environ.get("TELEGRAM_TOKEN")  # Токен из переменных окружения Render
 GROUP_CHAT_ID = -1003994088941 
-TOPIC_BIRTHDAYS = 5  
-TOPIC_DEADLINES = 112  
+TOPIC_BIRTHDAYS = 5
+TOPIC_DEADLINES = 5  
 if not TOKEN:
     raise ValueError("Переменная TELEGRAM_TOKEN не установлена!")
 
@@ -34,11 +34,8 @@ dp = Dispatcher(storage=storage)
 async def start_command(message: Message):
     await message.answer(
         "🎉 Привет! Я бот-староста!\n\n"
-        "Доступные команды:\n"
-        "/birthday - добавить/обновить день рождения\n"
-        "/birthdays - показать все дни рождения\n"
-        "Другие команды находятся пока в разработке, но скоро будут! 😉\n\n"
-        "А пока что можешь попробовать /help для получения списка всех команд, когда они будут готовы!"
+        "Я помогу тебе не забывать о важных датах, таких как дни рождения одногруппников и дедлайны по учебе. 📅\n\n"
+        "Для начала работы используй команду /help"
     )
 
 @dp.message(Command("help"))
@@ -51,18 +48,16 @@ async def help_command(message: Message):
         "**Дедлайны:**\n"
         "/deadlines - показать список дедлайнов\n"
         "/add\\_deadline - добавить дедлайн (только для старосты)\n"
-        "/del\\_deadline - удалить дедлайн (только для старосты)\n\n"
+        "/del\\_deadline - удалить дедлайн (только для старосты)\n"
+        "/old\\_deadlines - показать только прошедшие дедлайны\n\n"
         "**Игры:**\n"
         "/slot - слот-машина 🎰\n\n"
         "/start - приветствие\n"
-        "/help - эта справка",
+        "/help - эта справка\n"
+        "/cancel - отменить текущее действие",
         parse_mode="Markdown"
     )
 
-
-
-
-# ========== ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ДНЕЙ РОЖДЕНИЙ ==========
 
 @dp.message(Command("slot"))
 async def slot_machine(message: Message):

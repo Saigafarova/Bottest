@@ -58,7 +58,7 @@ def format_deadline_for_admin(deadlines):
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
         formatted_date = date_obj.strftime("%d.%m.%Y")
         text += f"`{did}` — {subject}: {title} ({formatted_date})\n"
-    text += "\n_Введите /del_deadline ID_ (например, /del_deadline 3)"
+    text += "\nВведите /del\\_deadline ID (например, /del\\_deadline 3)"
     return text
 
 # ========== ОБРАБОТЧИКИ КОМАНД ==========
