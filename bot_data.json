@@ -25,5 +25,14 @@
       "birthday": "29-09"
     }
   },
-  "deadlines": []
+  "deadlines": [
+    {
+      "id": 1,
+      "subject": "Теорвер",
+      "title": "Кр",
+      "deadline_date": "2026-05-20",
+      "comment": "загрузить в лк",
+      "created_by": 1337585530
+    }
+  ]
 }
