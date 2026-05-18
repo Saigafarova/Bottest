@@ -18,9 +18,9 @@ print("Проверка: модули загружены. Регистрируе
 load_dotenv()
 # ========== НАСТРОЙКИ ==========
 TOKEN = os.environ.get("TELEGRAM_TOKEN")  # Токен из переменных окружения Render
-GROUP_CHAT_ID = -1003994088941 
-TOPIC_BIRTHDAYS = 5
-TOPIC_DEADLINES = 5  
+GROUP_CHAT_ID = -1002919690674 
+TOPIC_BIRTHDAYS = 6420
+TOPIC_DEADLINES = 6420  
 if not TOKEN:
     raise ValueError("Переменная TELEGRAM_TOKEN не установлена!")
 
