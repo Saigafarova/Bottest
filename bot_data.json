@@ -57,14 +57,6 @@
       "deadline_date": "2026-05-30",
       "comment": "открывается 25 мая",
       "created_by": 1337585530
-    },
-    {
-      "id": 5,
-      "subject": "Матан",
-      "title": "2 Ср",
-      "deadline_date": "2026-05-29",
-      "comment": "",
-      "created_by": 1337585530
     }
   ]
 }
