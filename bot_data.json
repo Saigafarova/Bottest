@@ -49,6 +49,14 @@
       "deadline_date": "2026-05-29",
       "comment": "в лк",
       "created_by": 1337585530
+    },
+    {
+      "id": 6,
+      "subject": "История",
+      "title": "Эссе",
+      "deadline_date": "2026-05-31",
+      "comment": "",
+      "created_by": 1337585530
     }
   ]
 }
