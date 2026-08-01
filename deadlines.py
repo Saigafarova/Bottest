@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.types import Message
+from utils import check_user_in_group
 
 from github_db import (
     add_deadline_to_github as add_deadline,
@@ -67,6 +68,9 @@ router = Router()
 
 @router.message(Command("add_deadline"))
 async def add_deadline_command(message: Message):
+    if not await check_user_in_group(message.from_user.id, message.bot):
+        await message.answer("🚫 Доступ запрещён. Ты не из нашей группы.")
+        return
     """Добавляет новый дедлайн. Формат: /add_deadline Предмет | Название | ГГГГ-ММ-ДД | Комментарий"""
     if message.from_user.id != ADMIN_USER_ID:
         await message.answer("❌ Только староста может добавлять дедлайны.")
@@ -111,6 +115,9 @@ async def add_deadline_command(message: Message):
 
 @router.message(Command("deadlines"))
 async def show_deadlines(message: Message):
+    if not await check_user_in_group(message.from_user.id, message.bot):
+        await message.answer("🚫 Доступ запрещён.")
+        return
     """Показывает все дедлайны (будущие и прошедшие), сгруппированные по предметам"""
     args = message.text.split(maxsplit=1)
     if len(args) > 1:
@@ -134,6 +141,9 @@ async def show_deadlines(message: Message):
 
 @router.message(Command("old_deadlines"))
 async def show_old_deadlines(message: Message):
+    if not await check_user_in_group(message.from_user.id, message.bot):
+        await message.answer("🚫 Доступ запрещён.")
+        return
     """Показывает только прошедшие дедлайны"""
     deadlines = get_past_deadlines()
     if not deadlines:
@@ -144,6 +154,9 @@ async def show_old_deadlines(message: Message):
 
 @router.message(Command("del_deadline"))
 async def delete_deadline_command(message: Message):
+    if not await check_user_in_group(message.from_user.id, message.bot):
+        await message.answer("🚫 Доступ запрещён.")
+        return
     """Удаляет дедлайн по ID (только для админа)"""
     if message.from_user.id != ADMIN_USER_ID:
         await message.answer("❌ Только староста может удалять дедлайны.")

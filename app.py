@@ -13,10 +13,15 @@ import pytz
 from datetime import datetime
 from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
 from dotenv import load_dotenv
+
+from utils import check_user_in_group
+
 from birthdays import register_birthday_handlers, check_birthdays
 print("Проверка: модули загружены. Регистрируем команды...")
 load_dotenv()
 # ========== НАСТРОЙКИ ==========
+# ========== ПРОВЕРКА ГРУППЫ ==========
+GROUP_ID_FOR_CHECK = -1002919690674
 TOKEN = os.environ.get("TELEGRAM_TOKEN")  # Токен из переменных окружения Render
 GROUP_CHAT_ID = -1002919690674 
 TOPIC_BIRTHDAYS = 6420

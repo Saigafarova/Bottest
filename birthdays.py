@@ -11,6 +11,8 @@ from aiogram.types import Message
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
+from utils import check_user_in_group
+
 from github_db import (
     add_birthday_to_github as add_birthday,
     get_all_birthdays_from_github as get_all_birthdays,
@@ -26,6 +28,9 @@ router = Router()
 
 @router.message(Command("birthday"))
 async def birthday_command(message: Message, state: FSMContext):
+    if not await check_user_in_group(message.from_user.id, message.bot):
+        await message.answer("🚫 Доступ запрещён. Ты не из нашей группы.")
+        return
     await message.answer(
         "🎂 Введите дату вашего дня рождения в формате **ДД-ММ**\n"
         "Например: 15-03\n\n"
@@ -36,11 +41,17 @@ async def birthday_command(message: Message, state: FSMContext):
 
 @router.message(Command("cancel"))
 async def cancel_command(message: Message, state: FSMContext):
+    if not await check_user_in_group(message.from_user.id, message.bot):
+        await message.answer("🚫 Доступ запрещён. Ты не из нашей группы.")
+        return
     await state.clear()
     await message.answer("❌ Действие отменено.")
 
 @router.message(BirthdayForm.waiting_for_birthday)
 async def process_birthday(message: Message, state: FSMContext):
+    if not await check_user_in_group(message.from_user.id, message.bot):
+        await message.answer("🚫 Доступ запрещён. Ты не из нашей группы.")
+        return
     birthday = message.text.strip()
     if len(birthday) != 5 or birthday[2] != '-':
         await message.answer("❌ Неверный формат! Используйте ДД-ММ, например: 15-03")
@@ -71,6 +82,9 @@ async def process_birthday(message: Message, state: FSMContext):
 
 @router.message(Command("birthdays"))
 async def show_birthdays(message: Message):
+    if not await check_user_in_group(message.from_user.id, message.bot):
+        await message.answer("🚫 Доступ запрещён. Ты не из нашей группы.")
+        return
     birthdays = get_all_birthdays()
     if not birthdays:
         await message.answer("📭 Пока никто не добавил свой день рождения.")
