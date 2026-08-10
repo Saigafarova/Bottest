@@ -13,10 +13,10 @@ from aiogram.fsm.context import FSMContext
 
 from utils import check_user_in_group
 
-from github_db import (
-    add_birthday_to_github as add_birthday,
-    get_all_birthdays_from_github as get_all_birthdays,
-    get_today_birthdays_from_github as get_today_birthdays
+from supabase_db import (
+    add_birthday,
+    get_all_birthdays,
+    get_today_birthdays
 )
 
 # ========== FSM ==========

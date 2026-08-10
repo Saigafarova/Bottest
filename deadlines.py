@@ -10,12 +10,12 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from utils import check_user_in_group
 
-from github_db import (
-    add_deadline_to_github as add_deadline,
-    get_all_deadlines_from_github as get_all_deadlines,
-    get_deadlines_by_subject_from_github as get_deadlines_by_subject,
-    get_past_deadlines_from_github as get_past_deadlines,
-    delete_deadline_from_github as delete_deadline
+from supabase_db import (
+    add_deadline,
+    get_all_deadlines,
+    get_deadlines_by_subject,
+    get_past_deadlines,
+    delete_deadline_by_id as delete_deadline
 )
 
 # ========== НАСТРОЙКИ ==========
