@@ -1,31 +1,32 @@
+from birthdays import register_birthday_handlers, check_birthdays
+from utils import check_user_in_group
+from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
+from datetime import datetime
+import pytz
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.filters import Command
+from aiogram.types import Message
+from aiogram import Bot, Dispatcher, types
+from flask import Flask
 import asyncio
 import os
 import threading
-from flask import Flask
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message
-from aiogram.filters import Command
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.storage.memory import MemoryStorage
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import pytz
-from datetime import datetime
-from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
 from dotenv import load_dotenv
-
-from utils import check_user_in_group
-
-from birthdays import register_birthday_handlers, check_birthdays
-print("Проверка: модули загружены. Регистрируем команды...")
 load_dotenv()
+
+
+print("Проверка: модули загружены. Регистрируем команды...")
 # ========== НАСТРОЙКИ ==========
 # ========== ПРОВЕРКА ГРУППЫ ==========
 GROUP_ID_FOR_CHECK = -1002919690674
-TOKEN = os.environ.get("TELEGRAM_TOKEN")  # Токен из переменных окружения Render
-GROUP_CHAT_ID = -1002919690674 
+# Токен из переменных окружения Render
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
+GROUP_CHAT_ID = -1002919690674
 TOPIC_BIRTHDAYS = 6420
-TOPIC_DEADLINES = 6420  
+TOPIC_DEADLINES = 6420
 if not TOKEN:
     raise ValueError("Переменная TELEGRAM_TOKEN не установлена!")
 
@@ -42,6 +43,7 @@ async def start_command(message: Message):
         "Я помогу тебе не забывать о важных датах, таких как дни рождения одногруппников и дедлайны по учебе. 📅\n\n"
         "Для начала работы используй команду /help"
     )
+
 
 @dp.message(Command("help"))
 async def help_command(message: Message):
@@ -92,35 +94,35 @@ async def test_group(message: Message):
 # ========== ЗАПУСК БОТА ==========
 async def start_bot():
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
-    
+
     # Дни рождения
     scheduler.add_job(
-        check_birthdays, 
-        'cron', 
-        hour=9, 
+        check_birthdays,
+        'cron',
+        hour=9,
         minute=0,
         args=(bot, GROUP_CHAT_ID, TOPIC_BIRTHDAYS),
         id='birthdays_daily',
         replace_existing=True
     )
-    
+
     # Дедлайны
     scheduler.add_job(
-        check_deadlines, 
-        'cron', 
-        hour=9, 
+        check_deadlines,
+        'cron',
+        hour=9,
         minute=5,
         args=(bot, GROUP_CHAT_ID, TOPIC_DEADLINES),
         id='deadlines_daily',
         replace_existing=True
     )
-    
+
     scheduler.start()
-    
+
     print("✅ Планировщик APScheduler успешно запущен!")
     print(f"   → Дни рождения: каждый день в 9:00")
     print(f"   → Дедлайны: каждый день в 9:05")
-    
+
     # Показываем текущее время сервера (удобно для проверки)
     moscow_time = datetime.now(pytz.timezone('Europe/Moscow'))
     print(f"   → Текущее время на сервере: {moscow_time.strftime('%H:%M:%S')}")
@@ -131,19 +133,21 @@ async def start_bot():
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def home():
     return "Бот работает!", 200
+
 
 @app.route('/health')
 def health():
     return "OK", 200
 
+
 def run_flask():
     """Запускает Flask-сервер в отдельном потоке"""
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
 
 
 @dp.message(Command("test_deadline"))
@@ -156,12 +160,13 @@ print("Проверка: в app.py зарегистрированы обрабо
 
 if __name__ == "__main__":
     # Запускаем Flask в фоновом потоке
-    flask_thread = threading.Thread(target=run_flask, daemon=True)  # ← Вот здесь добавили daemon=True
+    # ← Вот здесь добавили daemon=True
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
-    
+
     # Регистрируем обработчики (ВАЖНО: перед запуском бота!)
     register_deadline_handlers(dp, GROUP_CHAT_ID, TOPIC_DEADLINES)
     register_birthday_handlers(dp, bot, GROUP_CHAT_ID, TOPIC_BIRTHDAYS)
-    
+
     # Запускаем бота
     asyncio.run(start_bot())

@@ -1,14 +1,17 @@
-import os
-from supabase import create_client, Client
-from datetime import datetime
 from typing import Optional, List, Tuple
+from datetime import datetime
+from supabase import create_client, Client
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # ========== ПОДКЛЮЧЕНИЕ К SUPABASE ==========
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("Переменные SUPABASE_URL и SUPABASE_KEY должны быть установлены!")
+    raise ValueError(
+        "Переменные SUPABASE_URL и SUPABASE_KEY должны быть установлены!")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -23,7 +26,7 @@ def add_birthday(user_id: int, username: str, birthday: str) -> bool:
             "username": username,
             "birthday": birthday
         }
-        # Лучше использовать upsert (нужен UNIQUE на user_id)
+
         supabase.table("birthdays").insert(data).execute()
         print(f"День рождения {username} сохранён")
         return True
@@ -46,7 +49,8 @@ def get_today_birthdays() -> List[Tuple[int, str]]:
     """Возвращает список именинников на сегодня"""
     try:
         today = datetime.now().strftime("%d-%m")
-        response = supabase.table("birthdays").select("*").eq("birthday", today).execute()
+        response = supabase.table("birthdays").select(
+            "*").eq("birthday", today).execute()
         return [(row["user_id"], row["username"]) for row in response.data]
     except Exception as e:
         print(f"[ERROR] get_today_birthdays: {e}")
@@ -74,8 +78,9 @@ def add_deadline(subject: str, title: str, deadline_date: str, comment: str, cre
 
 def get_all_deadlines() -> List[Tuple]:
     try:
-        response = supabase.table("deadlines").select("*").order("deadline_date").execute()
-        return [(row["id"], row["subject"], row["title"], row["deadline_date"], row["comment"]) 
+        response = supabase.table("deadlines").select(
+            "*").order("deadline_date").execute()
+        return [(row["id"], row["subject"], row["title"], row["deadline_date"], row["comment"])
                 for row in response.data]
     except Exception as e:
         print(f"[ERROR] get_all_deadlines: {e}")
@@ -89,7 +94,7 @@ def get_deadlines_by_subject(subject: str) -> List[Tuple]:
                     .ilike("subject", f"%{subject}%")
                     .order("deadline_date")
                     .execute())
-        return [(row["id"], row["subject"], row["title"], row["deadline_date"], row["comment"]) 
+        return [(row["id"], row["subject"], row["title"], row["deadline_date"], row["comment"])
                 for row in response.data]
     except Exception as e:
         print(f"[ERROR] get_deadlines_by_subject: {e}")
@@ -104,7 +109,7 @@ def get_past_deadlines() -> List[Tuple]:
                     .lt("deadline_date", today)
                     .order("deadline_date")
                     .execute())
-        return [(row["id"], row["subject"], row["title"], row["deadline_date"], row["comment"]) 
+        return [(row["id"], row["subject"], row["title"], row["deadline_date"], row["comment"])
                 for row in response.data]
     except Exception as e:
         print(f"[ERROR] get_past_deadlines: {e}")
