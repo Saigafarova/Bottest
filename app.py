@@ -1,22 +1,26 @@
-from birthdays import register_birthday_handlers, check_birthdays
-from utils import check_user_in_group
-from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
-from datetime import datetime
-import pytz
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.filters import Command
-from aiogram.types import Message
-from aiogram import Bot, Dispatcher, types
-from flask import Flask
-import asyncio
 import os
 import threading
+import asyncio
 from dotenv import load_dotenv
+
+# ========== ЗАГРУЗКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ (САМАЯ ПЕРВАЯ) ==========
 load_dotenv()
 
+# ========== ОСТАЛЬНЫЕ ИМПОРТЫ ==========
+from flask import Flask
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import Message
+from aiogram.filters import Command
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.memory import MemoryStorage
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import pytz
+from datetime import datetime
+
+from deadlines import register_deadline_handlers, check_deadlines, ADMIN_USER_ID
+from birthdays import register_birthday_handlers, check_birthdays
+from utils import check_user_in_group
 
 print("Проверка: модули загружены. Регистрируем команды...")
 # ========== НАСТРОЙКИ ==========
