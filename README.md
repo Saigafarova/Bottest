@@ -1,6 +1,5 @@
 
 # Bottest
-```markdown
 # Бот-староста
 
 Telegram-бот для студенческой группы.  
@@ -182,5 +181,4 @@ pytz
 flask
 python-dotenv
 supabase
-```
 ```
